@@ -19,7 +19,7 @@ cloudinary.config({
 });
 app.use(morgan("common"));
 
-app.use(express.json({limit: '10mb'}));
+app.use(express.json({ limit: "10mb" }));
 app.use(cookie());
 app.use(
   cors({
@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 });
 
 dbconnect();
-const port = process.env.port;
+const port = process.env.PORT || 3003;
 app.listen(port, (req, res) => {
   console.log(`server started on port ${port}`);
 });
