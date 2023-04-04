@@ -21,12 +21,13 @@ app.use(morgan("common"));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookie());
-app.use(
-  cors({
-    credentials: true,
-    origin: "http://localhost:3000",
-  })
-);
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: "http://localhost:3000",
+//   })
+// );
+app.use(cors());
 
 app.use("/auth", authRouter);
 app.use("/post", postRouter);
@@ -36,7 +37,7 @@ app.get("/", (req, res) => {
 });
 
 dbconnect();
-const port = process.env.PORT || 3003;
+const port = process.env.PORT;
 app.listen(port, (req, res) => {
   console.log(`server started on port ${port}`);
 });
