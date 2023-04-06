@@ -5,10 +5,10 @@ const { error, success } = require("../utils/Wrapper");
 const signupControlles = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const name = req.body.password;
+  const name = req.body.name;
   if (!email || !password || !name) {
     // return res.status(404).send("all fileds required");
-    return res.status(404).send("all fileds required");
+    return res.send(error(403,("all fileds required")));
   }
   const olduser = await User.findOne({ email });
   if (olduser) {
@@ -17,7 +17,7 @@ const signupControlles = async (req, res) => {
     return res.send(error(402, "Already Exists"));
   }
   const hashpass = await bcrypt.hash(password, 10);
-  const user = await User.create({
+   await User.create({
     email,
     name,
     password: hashpass,
@@ -32,8 +32,11 @@ const loginController = async (req, res) => {
     // return res.status(404).send("all fileds required");
     return res.send(error(402, "all fileds required"));
   }
-  const olduser = await User.findOne({ email }).select("+password");
-  const verri = await bcrypt.compare(password, olduser.password);
+  const olduser = await User?.findOne({ email })?.select("+password");
+  if(!olduser){
+    return res.send(error(404, "user not found"));
+  }
+  const verri = await bcrypt?.compare(password, olduser?.password);
   if (!verri) {
     // return res.status(401).send("Incorrect password");
     return res.send(error(403, "Incorrect password"));
@@ -50,7 +53,7 @@ const loginController = async (req, res) => {
 const generateAccesstoken = (data) => {
   try {
     const token = jwt.sign(data, process.env.accessToken, {
-      expiresIn: "15m",
+      expiresIn: "1y",
     });
 
     return token;

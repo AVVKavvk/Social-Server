@@ -1,35 +1,40 @@
 const Post = require("../models/Post");
 const User = require("../models/User");
+const { mapPostOuptput } = require("../utils/Utils");
 const { success, error } = require("../utils/Wrapper");
 const cloudinary = require("cloudinary").v2;
 const followUnfollowController = async (req, res) => {
   try {
     const { userIdToFollow } = req.body;
     const curUserId = req._id;
+// console.log(userIdToFollow);
     const userToFollow = await User.findById(userIdToFollow);
     const curUser = await User.findById(curUserId);
+
     if (curUserId === userIdToFollow) {
-      return res.send(error(409, "You can't follow yourself"));
+      return res.send(error(409, "Users cannot follow themselves"));
     }
+
     if (!userToFollow) {
-      return res.send(error(404, "User not found"));
+      return res.send(error(404, "User to follow not found"));
     }
 
     if (curUser.followings.includes(userIdToFollow)) {
-      const folllowingIndex = curUser.followings.indexOf(userIdToFollow);
-      curUser.followings.splice(folllowingIndex, 1);
-      const followerIndex = userToFollow.followers.indexOf(curUserId);
+      // already followed
+      const followingIndex = curUser.followings.indexOf(userIdToFollow);
+      curUser.followings.splice(followingIndex, 1);
+
+      const followerIndex = userToFollow.followers.indexOf(curUser);
       userToFollow.followers.splice(followerIndex, 1);
-      await curUser.save();
-      await userToFollow.save();
-      return res.send(success(200, "UnFollow successfully"));
     } else {
       userToFollow.followers.push(curUserId);
       curUser.followings.push(userIdToFollow);
-      await curUser.save();
-      await userToFollow.save();
-      return res.send(success(200, "Follow successfully"));
     }
+
+    await userToFollow.save();
+    await curUser.save();
+
+    return res.send(success(200, { user: userToFollow }));
   } catch (e) {
     // console.log(e);
     return res.send(error(500, e.message));
@@ -38,13 +43,27 @@ const followUnfollowController = async (req, res) => {
 const getAllPostOfMyFollowingsController = async (req, res) => {
   try {
     const curUserId = req._id;
-    const curuser = await User.findById(curUserId);
-    const posts = await Post.find({
+    const curuser = await User.findById(curUserId).populate("followings");
+    const fullPosts = await Post.find({
       owner: {
         $in: curuser.followings,
       },
+    }).populate("owner");
+
+    const posts =
+      fullPosts &&
+      fullPosts.map((item) => mapPostOuptput(item, req._id)).reverse();
+    // console.log("vipiin",fullPosts);
+    const followingIds =
+      curuser.followings && curuser.followings.map((item) => item._id);
+    const suggestions = await User.find({
+      _id: {
+        $nin: followingIds,
+        $ne:req._id
+      },
+      
     });
-    return res.send(success(200, posts));
+    return res.send(success(200, { ...curuser._doc, suggestions, posts }));
   } catch (e) {
     console.log(e);
     return res.send(error(500, e.message));
@@ -182,6 +201,29 @@ const updateMyProfileContoller = async (req, res) => {
     return res.send(error(500, e.message));
   }
 };
+
+const getUserProflie = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    if (!userId) {
+      return res.send(error(400, "userId is required"));
+    }
+    const user = await User.findById(userId).populate({
+      path: "posts",
+      populate: {
+        path: "owner",
+      },
+    });
+
+    const fullPost = user.posts;
+    const posts =
+      fullPost &&
+      fullPost.map((item) => mapPostOuptput(item, req._id)).reverse();
+    return res.send(success(200, { ...user._doc, posts }));
+  } catch (e) {
+    return res.send(error(500, e.message));
+  }
+};
 module.exports = {
   followUnfollowController,
   getAllPostOfMyFollowingsController,
@@ -190,4 +232,5 @@ module.exports = {
   deleteMyProflie,
   getMyInfoController,
   updateMyProfileContoller,
+  getUserProflie,
 };

@@ -23,14 +23,13 @@ const userSchema = mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
-        unique: true,
+        
       },
     ],
     followings: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
-        unique: true,
       },
     ],
     avatar: {
