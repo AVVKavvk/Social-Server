@@ -22,15 +22,16 @@ app.use(morgan("common"));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookie());
 // app.use(cors());
-// let origin = "http://localhost:3000";
+// let origin="http://localhost:3000"
 // app.use(
 //   cors({
 //     credentials: true,
 //     origin
-//  })
+//   })
 // );
-app.use(cors());
-
+app.use(cors({
+  credentials: true,
+}))
 app.use("/auth", authRouter);
 app.use("/post", postRouter);
 app.use("/user", userRouter);
